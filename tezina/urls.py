@@ -7,5 +7,6 @@ urlpatterns = [
     path('api/v1/users', views.log_in, name='login'),
     path('api/v1/users/<str:email>', views.change_pass, name='change pass'),
     path('api/v1/create_user', views.create_user, name='create and list users'),
+    path('api/v1/weight/<str:date>', views.change_weight, name='change weight'),
 
     ]   

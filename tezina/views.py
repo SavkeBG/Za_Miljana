@@ -240,3 +240,55 @@ def create_user(request):
             'All data': list(all_users)
 
             }, status=200)
+
+def change_weight(request,date):
+    try:
+        check_user = Data.objects.get(date=date)
+
+    except ObjectDoesNotExist:
+        return JsonResponse({
+
+        'message': "fallow doesn't exist",
+        'user': date
+          
+        },status=404)
+
+    if request.method == "PATCH":
+        post_data = json.loads(request.body)
+        email = post_data.get('email')
+        password = post_data.get('password')
+        weight = post_data.get('weight')
+
+        if 'email' not in post_data:
+            return HttpResponse(status=400)
+        if 'password' not in post_data:
+            return HttpResponse(status=400) 
+
+        user = authenticate(email=email,password=password)
+
+        if user is None:
+            return JsonResponse({
+                
+                "error": "user or password incorrect",
+                "message": "please enter valid credentials"
+
+            }, status=404)
+
+        if user.is_authenticated:
+            if user.is_active:
+                data = Data.objects.get(date=date)
+                data.weight = weight
+                data.save()
+                
+
+            
+                return JsonResponse({
+
+                "message": "weight has been change",
+                "user": email
+
+                })
+                
+    if request.method not in ["PATCH"]:
+        return HttpResponse(status=400)
+
