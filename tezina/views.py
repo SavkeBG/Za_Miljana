@@ -52,15 +52,17 @@ def post_list(request):
 
             },status=400)
 
+    if request.method == 'GET':
+        all_data = Data.objects.values('date', 'weight')
+
+        return JsonResponse({
+
+            'All data': list(all_data)
+
+            }, status=200)
+
     else:
-        if request.method == 'GET':
-            all_data = Data.objects.values('date', 'weight')
-
-            return JsonResponse({
-
-                'All data': list(all_data)
-
-                }, status=200)
+        return HttpResponse(status=400)
 
 
 def get_delete_patch(request,date):
@@ -111,26 +113,48 @@ def get_delete_patch(request,date):
 
 
 
-    if request.method == 'PATCH':
+    if request.method == "PATCH":
         post_data = json.loads(request.body)
-
+        email = post_data.get('email')
+        password = post_data.get('password')
         weight = post_data.get('weight')
 
-        data = Data.objects.get(date=date)
-        data.weight = weight
-        data.save()
-        
+        if 'email' not in post_data:
+            return HttpResponse(status=400)
+        if 'password' not in post_data:
+            return HttpResponse(status=400) 
 
-        return JsonResponse({
+        user = authenticate(email=email,password=password)
 
-            'message': 'The weight has been updated:',
+        if user is None:
+            return JsonResponse({
+                
+                "error": "user or password incorrect",
+                "message": "please enter valid credentials"
 
-            'date': date,
-            'weight': data.weight
-        }, status=200)
+            }, status=404)
 
+        if user.is_authenticated:
+            if user.is_active:
+                data = Data.objects.get(date=date)
+                data.weight = weight
+                data.save()
+                           
+                return JsonResponse({
+
+                "message": "weight has been change",
+                "user": email
+
+                })
+
+            else:
+                return JsonResponse({
+                    'message': "The user is not active",
+                    "user": email
+                })
 
     if request.method not in ['PATCH','DELETE','GET']:
+        
         return HttpResponse(status = 400)
 
 
@@ -169,8 +193,14 @@ def log_in(request):
                 "user": email
 
                 })
+
+            else:
+                return JsonResponse({
+                    'message': "The user is not active",
+                    "user": email
+                })
                 
-    if request.method not in ["POST"]:
+    else:
         return HttpResponse(status=400)
 
 
@@ -203,6 +233,12 @@ def change_pass(request, email):
                 "username": user.email
             },status=200)
 
+        else:
+                return JsonResponse({
+                    'message': "The user is not active",
+                    "user": email
+                })
+
     if request.method not in ["PATCH"]:
         return HttpResponse(status=400)
 
@@ -227,7 +263,10 @@ def create_user(request):
         user.save()
 
         response = {
-            "user": user.email        
+            "user": user.email,
+            "user": user.first_name,
+            "user": user.last_name
+
         }
 
         return JsonResponse(response)
@@ -248,7 +287,7 @@ def change_weight(request,date):
     except ObjectDoesNotExist:
         return JsonResponse({
 
-        'message': "fallow doesn't exist",
+        'message': "The fallowing date has not been found",
         'user': date
           
         },status=404)
@@ -279,14 +318,18 @@ def change_weight(request,date):
                 data = Data.objects.get(date=date)
                 data.weight = weight
                 data.save()
-                
-
-            
+                           
                 return JsonResponse({
 
                 "message": "weight has been change",
                 "user": email
 
+                })
+
+            else:
+                return JsonResponse({
+                    'message': "The user is not active",
+                    "user": email
                 })
                 
     if request.method not in ["PATCH"]:
