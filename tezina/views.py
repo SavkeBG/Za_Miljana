@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
 import json
 import os
@@ -7,7 +7,9 @@ from tezina.models import Data, MyUser
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 from django.contrib.auth import authenticate, login
-from tezina.forms import UserCreationForm
+from tezina.forms import UserForm
+from django.contrib import messages
+
 
 
 
@@ -245,9 +247,27 @@ def change_pass(request, email):
 
 def create_user(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = forms.UserForm(request.POST)
         if form.is_valid():
-            return HttpResponse(status=200)
+            form.save()
+            
+          
+            
+            
+
+
+        
+
+
+
+        
+       
+
+            
+            
+            
+
+            
         
 
 
