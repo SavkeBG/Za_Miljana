@@ -3,6 +3,19 @@ from django.contrib.auth.models import (
     BaseUserManager, AbstractBaseUser
 )
 
+
+
+
+class Data(models.Model):
+    date = models.DateField(unique = True)
+    weight = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.date, self.weight, }"
+
+
+
+
 class MyUserManager(BaseUserManager):
     def create_user(self, email, first_name, last_name, password=None):
         """
@@ -14,7 +27,7 @@ class MyUserManager(BaseUserManager):
 
         user = self.model(
             email=self.normalize_email(email),
-            first_name=first_name,
+            first_name=firtst_name,
             last_name=last_name
         )
 
@@ -37,6 +50,7 @@ class MyUserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
+
 class MyUser(AbstractBaseUser):
     email = models.EmailField(
         verbose_name='email address',
@@ -54,7 +68,7 @@ class MyUser(AbstractBaseUser):
     REQUIRED_FIELDS = ['first_name','last_name']
 
     def __str__(self):
-        return f"{self.email, self.first_name, self.last_name}"
+        return self.email
 
     def has_perm(self, perm, obj=None):
         "Does the user have a specific permission?"
@@ -71,21 +85,6 @@ class MyUser(AbstractBaseUser):
         "Is the user a member of staff?"
         # Simplest possible answer: All admins are staff
         return self.is_admin
-
-
-class Data(models.Model):
-    user = models.ForeignKey(MyUser, on_delete=models.CASCADE)
-    date = models.DateField()
-    weight = models.IntegerField()
-
-    class Meta:       
-        constraints = [
-             models.UniqueConstraint(fields=['user','date'], name='unique Data')
-              ]
-
-    def __str__(self):
-        return f"{self.date, self.weight, }"
-
 
 
 

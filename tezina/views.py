@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 import json
 import os
 import datetime
@@ -7,53 +7,43 @@ from tezina.models import Data, MyUser
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 from django.contrib.auth import authenticate, login
-from tezina.forms import UserForm
-from django.contrib import messages
-
-
+from tezina.forms import UserForm, Post
 
 
 
 
 def post_list(request):
-    if request.method == 'POST':     
-        post_data = json.loads(request.body)
-        date = post_data.get('date')
-        weight = post_data.get('weight')
-
-        if 'date' not in post_data:
-            return HttpResponse(status=400)
-        if 'weight' not in post_data:
-            return HttpResponse(status=400)
-
-
+    if request.method == 'POST':
         try:
-            datetime.datetime.strptime(date, '%Y-%m-%d')
+            form = Post(request.POST)
+            if form.is_valid():
+                data = form.save(commit=False)
+                data.user = request.user
+                print(request.user)
+                data.save()
+                print(data.save)
 
-        except ValueError:
-            return JsonResponse({
+                return JsonResponse({
 
-                'error': 'Incorect data format, should be YYYY-MM-DD',
-                'date': date
+                    'date': data.date,
+                    'weight': data.weight
 
-            }, status=400)   
-   
-        try:
-            create_data = Data.objects.create(weight=weight, date=date)
-            create_data.save()
+                    })
 
-            return JsonResponse({
-                'date': date,
-                'weight': weight
-            }, status = 201)
+            else:
+                return JsonResponse({
+                    'Message': 'Something went wrong',
+                    'Error': dict(form.errors.items())
 
+                    })
         except IntegrityError:
+
             return JsonResponse({
+                'message': 'Date already exist',
+                'date': data.date
 
-                'message': 'Date already exists',
-                'date': date
-
-            },status=400)
+            })
+            
 
     if request.method == 'GET':
         all_data = Data.objects.values('date', 'weight')
@@ -66,12 +56,15 @@ def post_list(request):
 
     else:
         return HttpResponse(status=400)
+  
+
+
 
 
 def get_delete_patch(request,date):
     try:
         data = Data.objects.get(date=date)
-
+        print(data)
     except ObjectDoesNotExist:
         return JsonResponse({
 
@@ -95,24 +88,12 @@ def get_delete_patch(request,date):
 
         get_data = Data.objects.get(date=date)
 
-        response = {
 
-        'date': get_data.date,
-        'weight': get_data.weight
+        return JsonResponse({
+            'date':get_data.date,
+            'weight':get_data.weight
+        })
 
-        }
-
-        return JsonResponse(response, status=200)
-
-
-    if request.method == 'DELETE':
-            delete_data = Data.objects.get(date=date).delete()
-
-            return JsonResponse({
-
-                'message': 'The date has been deleted',
-                'date': date
-            },status=200)
 
 
 
@@ -242,14 +223,42 @@ def change_pass(request, email):
                     "user": email
                 })
 
-    if request.method not in ["PATCH"]:
+    else:
         return HttpResponse(status=400)
 
 def create_user(request):
     if request.method == 'POST':
-        form = forms.UserForm(request.POST)
+        form = UserForm(request.POST)
         if form.is_valid():
-            form.save()
+            user = form.save()
+            print(user)
+           
+
+            return JsonResponse({
+                'message': "user created",
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name
+            })
+
+        else:
+            return JsonResponse({
+
+                'message': 'something went wrong',
+                'Error': dict(form.errors.items())
+
+
+            },)
+
+ 
+
+
+
+    
+     
+
+        
+
             
           
             

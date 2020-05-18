@@ -6,7 +6,7 @@ from django.contrib.auth.forms import ReadOnlyPasswordHashField
 from tezina.forms import UserForm
 
 
-from tezina.models import MyUser
+from tezina.models import MyUser,Data
 
 
 class UserCreationForm(forms.ModelForm):
@@ -83,7 +83,8 @@ class UserAdmin(BaseUserAdmin):
 
 
 # Now register the new UserAdmin...
-admin.site.register(MyUser, UserAdmin)
+admin.site.register(MyUser,UserAdmin)
+admin.site.register(Data)
 # ... and, since we're not using Django's built-in permissions,
 # unregister the Group model from admin.
 admin.site.unregister(Group)

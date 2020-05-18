@@ -1,5 +1,5 @@
 from django import forms
-from tezina.models import MyUser
+from tezina.models import MyUser, Data
 from django.forms import ModelForm
 
 
@@ -26,11 +26,25 @@ class UserForm(forms.ModelForm):
         # Save the provided password in hashed format
         user = super(UserForm, self).save(commit=False)
         user.set_password(self.cleaned_data["password1"])
+      
+
         
         if commit:
             user.save()
         return user
 
+class Post(forms.ModelForm):
+
+
+    class Meta:
+        model = Data
+        fields = ('weight','date')
+
+
+            
+
+
+    
 
  
 
