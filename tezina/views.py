@@ -12,6 +12,7 @@ from tezina.forms import UserForm, Post
 
 
 
+
 def post_list(request):
     if request.method == 'POST':
         try:
@@ -19,9 +20,7 @@ def post_list(request):
             if form.is_valid():
                 data = form.save(commit=False)
                 data.user = request.user
-                print(request.user)
                 data.save()
-                print(data.save)
 
                 return JsonResponse({
 
@@ -46,11 +45,11 @@ def post_list(request):
             
 
     if request.method == 'GET':
-        all_data = Data.objects.values('date', 'weight')
+        all_data = Data.objects.filter(user=request.user).values('date','weight')
 
         return JsonResponse({
 
-            'All data': list(all_data)
+            'All records': list(all_data)
 
             }, status=200)
 
@@ -62,32 +61,33 @@ def post_list(request):
 
 
 def get_delete_patch(request,date):
-    try:
-        data = Data.objects.get(date=date)
-        print(data)
-    except ObjectDoesNotExist:
-        return JsonResponse({
+    if request.user.is_authenticated: 
 
-            'message': "The fallowing date has not been found",
-            'date': date
+        try:
+            datetime.datetime.strptime(date, '%Y-%m-%d')
+
+        except ValueError:          
+            return JsonResponse({
+
+                'error': 'Incorect data format, should be YYYY-MM-DD',
+                'date': date
+
+                }, status=400)
+
+        try:
+            data = Data.objects.get(user=request.user, date=date)
+
+        except ObjectDoesNotExist:
+            return JsonResponse({
+
+                'message': "The fallowing date has not been found",
+                'date': date
           
-        })
-    try:
-        datetime.datetime.strptime(date, '%Y-%m-%d')
-
-    except ValueError:
-        return JsonResponse({
-
-            'error': 'Incorect data format, should be YYYY-MM-DD',
-            'date': date
-
-            }, status=400)
-
+            })
 
     if request.method == 'GET':
 
-        get_data = Data.objects.get(date=date)
-
+        get_data = Data.objects.get(user=request.user, date=date)
 
         return JsonResponse({
             'date':get_data.date,
@@ -95,51 +95,38 @@ def get_delete_patch(request,date):
         })
 
 
+    if request.method == "DELETE":
+
+        data = Data.objects.get(user=request.user, date=date).delete()
+
+        return JsonResponse({
+            'message': 'Date has been deleted',
+            'date': date
+
+        })
+
 
 
     if request.method == "PATCH":
         post_data = json.loads(request.body)
-        email = post_data.get('email')
-        password = post_data.get('password')
         weight = post_data.get('weight')
 
-        if 'email' not in post_data:
+        if 'weight' not in post_data:
             return HttpResponse(status=400)
-        if 'password' not in post_data:
-            return HttpResponse(status=400) 
+   
+        data = Data.objects.filter(user=request.user, date=date).update(weight=weight)
 
-        user = authenticate(email=email,password=password)
-
-        if user is None:
-            return JsonResponse({
-                
-                "error": "user or password incorrect",
-                "message": "please enter valid credentials"
-
-            }, status=404)
-
-        if user.is_authenticated:
-            if user.is_active:
-                data = Data.objects.get(date=date)
-                data.weight = weight
-                data.save()
                            
-                return JsonResponse({
+        return JsonResponse({
 
                 "message": "weight has been change",
-                "user": email
+                'date': date,
+                'weight': weight
 
                 })
 
-            else:
-                return JsonResponse({
-                    'message': "The user is not active",
-                    "user": email
-                })
-
-    if request.method not in ['PATCH','DELETE','GET']:
-
-        return HttpResponse(status = 400)
+    else:
+        return HttpResponse(status=400)
 
 
 
@@ -249,6 +236,9 @@ def create_user(request):
 
 
             },)
+
+    else:
+        return HttpResponse(status=400)
 
  
 
