@@ -61,29 +61,28 @@ def post_list(request):
 
 
 def get_delete_patch(request,date):
-    if request.user.is_authenticated: 
 
-        try:
-            datetime.datetime.strptime(date, '%Y-%m-%d')
+    try:
+        datetime.datetime.strptime(date, '%Y-%m-%d')
 
-        except ValueError:          
-            return JsonResponse({
+    except ValueError:          
+        return JsonResponse({
 
-                'error': 'Incorect data format, should be YYYY-MM-DD',
-                'date': date
+            'error': 'Incorect data format, should be YYYY-MM-DD',
+            'date': date
 
-                }, status=400)
+            }, status=400)
 
-        try:
-            data = Data.objects.get(user=request.user, date=date)
+    try:
+        data = Data.objects.get(user=request.user, date=date)
 
-        except ObjectDoesNotExist:
-            return JsonResponse({
+    except ObjectDoesNotExist:
+        return JsonResponse({
 
-                'message': "The fallowing date has not been found",
-                'date': date
+            'message': "The fallowing date has not been found",
+            'date': date
           
-            })
+        })
 
     if request.method == 'GET':
 
